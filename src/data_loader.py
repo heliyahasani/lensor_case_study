@@ -1,3 +1,4 @@
+from prefect import task
 import torch
 from torch.utils.data import DataLoader
 from typing import Optional
@@ -65,3 +66,24 @@ class DataLoaderManager:
             collate_fn=self.collate_fn,
             pin_memory=self.pin_memory
         )
+@task
+def create_data_loader_task(custom_dataset: CustomDataset, batch_size: int, shuffle: bool = True) -> DataLoader:
+    """
+    Prefect task to create a PyTorch DataLoader for the given custom dataset.
+
+    Parameters:
+    ----------
+    custom_dataset : CustomDataset
+        The custom dataset to be loaded.
+    batch_size : int
+        The number of samples per batch to load.
+    shuffle : bool, optional
+        If `True`, data will be reshuffled at every epoch. Default is `True`.
+
+    Returns:
+    -------
+    DataLoader
+        A PyTorch DataLoader object for the custom dataset.
+    """
+    manager = DataLoaderManager(custom_dataset, batch_size)
+    return manager.create_data_loader(shuffle=shuffle)
