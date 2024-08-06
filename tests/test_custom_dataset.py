@@ -4,7 +4,7 @@ import torch
 from PIL import Image
 from io import BytesIO
 import numpy as np
-from dataset import CustomDataset
+from custom_dataset import CustomDataset
 img1  = "/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.2e0aff71cdeb0fc5615a484010eb3c56.jpg"
 img2  = "/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.6cfdecf9f081672f8a9f1c91c75d1ab9.jpg"
 img3  = "/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.fcf788371d618e45d85f008c64238770.jpg"
