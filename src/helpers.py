@@ -1,5 +1,5 @@
 import os
-from pandas import pd
+import pandas as pd
 import numpy as np
 import torch
 import albumentations as A
@@ -69,3 +69,102 @@ def augment_image(img: np.ndarray, bboxes: list, class_labels: list) -> dict:
         ToTensorV2()
     ], bbox_params=A.BboxParams(format='coco', label_fields=['class_labels'], clip=True))
     return augmentation(image=img, bboxes=bboxes, class_labels=class_labels)
+
+# Helper function to calculate IoU
+def calculate_iou(box1, box2):
+    x1, y1, x2, y2 = box1
+    x1g, y1g, x2g, y2g = box2
+
+    xi1 = max(x1, x1g)
+    yi1 = max(y1, y1g)
+    xi2 = min(x2, x2g)
+    yi2 = min(y2, y2g)
+    
+    inter_area = max(xi2 - xi1, 0) * max(yi2 - yi1, 0)
+    box1_area = (x2 - x1) * (y2 - y1)
+    box2_area = (x2g - x1g) * (y2g - y1g)
+    union_area = box1_area + box2_area - inter_area
+
+    return inter_area / union_area
+
+# Helper function to calculate precision and recall
+def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
+    model.eval()
+    tp, fp, fn = 0, 0, 0
+    with torch.no_grad():
+        for data in data_loader:
+            imgs = []
+            targets = []
+
+            if len(data) < 2:
+                continue
+
+            for img in data[0]:
+                imgs.append((torch.tensor(img, dtype=torch.float32)).to(device))
+            
+            for target in data[1]:
+                boxes = target["boxes"]
+                labels = target["labels"]
+                
+                # Convert (x1, y1, width, height) to (x1, y1, x2, y2)
+                converted_boxes = []
+                for box in boxes:
+                    x1, y1, w, h = box
+                    x2 = x1 + w
+                    y2 = y1 + h
+                    converted_boxes.append([x1, y1, x2, y2])
+                
+                converted_boxes = torch.tensor(converted_boxes, dtype=torch.float32).to(device)
+                labels = labels.to(device)
+
+                targ = {
+                    "boxes": converted_boxes,
+                    "labels": labels,
+                }
+
+                targets.append(targ)
+
+            outputs = model(imgs)
+            
+            for target, output in zip(targets, outputs):
+                gt_boxes = target["boxes"]
+                pred_boxes = output["boxes"]
+                pred_scores = output["scores"]
+                pred_labels = output["labels"]
+
+                for i, gt_box in enumerate(gt_boxes):
+                    if len(pred_boxes) == 0:
+                        fn += 1
+                        continue
+
+                    ious = [calculate_iou(gt_box, pred_box) for pred_box in pred_boxes]
+                    max_iou = max(ious)
+                    max_iou_idx = ious.index(max_iou)
+
+                    if max_iou >= iou_threshold and pred_labels[max_iou_idx] == target["labels"][i]:
+                        tp += 1
+                        pred_boxes = torch.cat((pred_boxes[:max_iou_idx], pred_boxes[max_iou_idx+1:]))
+                    else:
+                        fn += 1
+
+                fp += len(pred_boxes)
+
+    precision = tp / (tp + fp) if tp + fp > 0 else 0
+    recall = tp / (tp + fn) if tp + fn > 0 else 0
+
+    return precision, recall
+
+def coco_to_pascal(box):
+    x1, y1, w, h = box
+    x2 = x1 + w
+    y2 = y1 + h
+    return [x1, y1, x2, y2]
+
+def assert_pascal_boxes(boxes):
+    for box in boxes:
+        assert_pascal_box(box)
+
+def assert_pascal_box(box):
+    x1, y1, x2, y2 = box
+    if x2 <= x1 or y2 <= y1:
+        raise ValueError(f"Invalid box {box}")

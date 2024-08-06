@@ -5,10 +5,11 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset
 import albumentations as A
-from helpers import create_directories,prepare_class_indices,update_labels_tensor,augment_image
+from helpers import assert_pascal_boxes, coco_to_pascal, create_directories,prepare_class_indices,update_labels_tensor,augment_image
 from prefect import task
 from torchvision import transforms as T
 from typing import Tuple
+
 
 class CustomDataset(Dataset):
     def __init__(self, dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, oversample: bool = True, augment: bool = True, augmented_dir: str = 'raw/images/train', output_dir: str = 'output_images'):
@@ -130,15 +131,17 @@ class CustomDataset(Dataset):
         file_name = self.unique_file_names[idx]
         img_path = os.path.join(self.image_directory, file_name) if os.path.exists(os.path.join(self.image_directory, file_name)) else os.path.join(self.augmented_dir, file_name)
         label = self.get_labels(idx)
-        bboxes = [tuple(x) for x in self.dataframe[self.dataframe['file_name'] == file_name]['bbox']]
+        bboxes = [x for x in self.dataframe[self.dataframe['file_name'] == file_name]['bbox']]
 
         img = np.array(Image.open(img_path).convert('RGB'))
         transformed = self.transform(image=img, bboxes=bboxes, class_labels=[self.class_names[x] for x in self.dataframe[self.dataframe['file_name'] == file_name]['category_id']])
         transformed_img = transformed['image']
         transformed_img = torch.tensor(transformed_img, dtype=torch.float32).permute(2, 0, 1)
-        transformed_boxes = np.array(transformed['bboxes'])
+        pascal_boxes = [list(coco_to_pascal(box)) for box in transformed['bboxes']]
+        assert_pascal_boxes(pascal_boxes)
+        
         target = {
-            "boxes": torch.tensor(transformed_boxes, dtype=torch.float32),
+            "boxes": torch.tensor(np.array(pascal_boxes), dtype=torch.float32),
             "labels": label
         }
 
@@ -153,6 +156,25 @@ class CustomDataset(Dataset):
         """
         return self.multi_label_labels_tensor[idx]
 
+
+
+def create_dataset_(dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, augment: bool = True) -> CustomDataset:
+    """
+    Prefect task to create a CustomDataset instance.
+
+    This function creates an instance of the CustomDataset class, which is used to handle 
+    and preprocess image data for machine learning tasks. The dataset includes functionality 
+    for data augmentation to balance class distributions.
+
+    :param dataframe: A Pandas DataFrame containing the dataset information. 
+                      It should include columns such as 'file_name', 'category_id', 'bbox', etc.
+    :param unique_file_names: A list of unique file names present in the dataset.
+    :param image_directory: The directory where the original images are stored.
+    :param max_class_size: The maximum number of samples per class. Defaults to 100.
+    :param augment: Boolean flag to determine whether to augment the dataset to balance classes. Defaults to True.
+    :return: An instance of the CustomDataset class.
+    """
+    return CustomDataset(dataframe, unique_file_names, image_directory, max_class_size, augment=augment)
 @task
 def create_dataset(dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, augment: bool = True) -> CustomDataset:
     """
