@@ -22,9 +22,9 @@ train_dataset = create_dataset_(train_merged_df, train_merged_df['file_name'].un
 val_dataset = create_dataset_(validation_merged_df, validation_merged_df['file_name'].unique(), val_image_directory, augment=False)
 test_dataset = create_dataset_(test_merged_df, test_merged_df['file_name'].unique(), test_image_directory, augment=False)
 
-train_data_loader = create_data_loader_task_(train_dataset, batch_size=16, shuffle=True)
-val_data_loader = create_data_loader_task_(val_dataset, batch_size=16, shuffle=False)
-test_data_loader = create_data_loader_task_(test_dataset, batch_size=16, shuffle=False)
+train_data_loader = create_data_loader_task_(train_dataset, batch_size=32, shuffle=True)
+val_data_loader = create_data_loader_task_(val_dataset, batch_size=32, shuffle=False)
+test_data_loader = create_data_loader_task_(test_dataset, batch_size=32, shuffle=False)
 
 print("Running model..")
 model = train_model_task_(train_data_loader, val_data_loader, num_epochs=1)

@@ -12,7 +12,7 @@ from typing import Tuple
 
 
 class CustomDataset(Dataset):
-    def __init__(self, dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, oversample: bool = True, augment: bool = True, augmented_dir: str = 'raw/images/train', output_dir: str = 'output_images'):
+    def __init__(self, dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, oversample: bool = True, augment: bool = True, augmented_dir: str = 'dataset/augumented/images/train'):
         """
         Initialize the CustomDataset class.
 
@@ -30,8 +30,7 @@ class CustomDataset(Dataset):
         self.image_directory = image_directory
         self.max_class_size = max_class_size
         self.augmented_dir = augmented_dir
-        self.output_dir = output_dir
-        create_directories(self.augmented_dir, self.output_dir)
+        create_directories(self.augmented_dir)
 
         self.class_names = self.dataframe.set_index('category_id')['name'].to_dict()
         self.class_indices = prepare_class_indices(self.dataframe, self.class_names)
