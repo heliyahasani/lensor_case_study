@@ -12,6 +12,17 @@ files = [
 ]
 
 [[package]]
+name = "aiofiles"
+version = "24.1.0"
+description = "File support for asyncio."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "aiofiles-24.1.0-py3-none-any.whl", hash = "sha256:b4ec55f4195e3eb5d7abd1bf7e061763e864dd4954231fb8539a0ef8bb8260e5"},
+    {file = "aiofiles-24.1.0.tar.gz", hash = "sha256:22a075c9e5a3810f0c2e48f3008c94d68c65d763b9b03857924c99e57355166c"},
+]
+
+[[package]]
 name = "aiosqlite"
 version = "0.20.0"
 description = "asyncio bridge to the standard sqlite3 module"
@@ -3573,4 +3584,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9e3e15b1eee9b05d36c3a723ca9790d654066f2647201a504bfb279389ddc9bb"
+content-hash = "50f03f3c32535f7126398e56a660abcefcaa6d597e8edb993689fc7ec56efc1b"
