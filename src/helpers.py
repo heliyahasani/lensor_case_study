@@ -69,8 +69,17 @@ def augment_image(img: np.ndarray, bboxes: list, class_labels: list) -> dict:
     ], bbox_params=A.BboxParams(format='coco', label_fields=['class_labels'], clip=True))
     return augmentation(image=img, bboxes=bboxes, class_labels=class_labels)
 
-# Helper function to calculate IoU
 def calculate_iou(box1, box2):
+    """
+    Calculate the Intersection over Union (IoU) between two bounding boxes.
+
+    Args:
+        box1 (list or tuple): Bounding box in the format [x1, y1, x2, y2].
+        box2 (list or tuple): Ground truth bounding box in the format [x1, y1, x2, y2].
+
+    Returns:
+        float: IoU value.
+    """
     x1, y1, x2, y2 = box1
     x1g, y1g, x2g, y2g = box2
 
@@ -86,8 +95,19 @@ def calculate_iou(box1, box2):
 
     return inter_area / union_area
 
-# Helper function to calculate precision and recall
 def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
+    """
+    Calculate precision and recall metrics for a given model and data loader.
+
+    Args:
+        model (torch.nn.Module): Trained object detection model.
+        data_loader (torch.utils.data.DataLoader): Data loader for the dataset.
+        device (torch.device): Device to run the model on ('cuda' or 'cpu').
+        iou_threshold (float): IoU threshold to determine a true positive (default is 0.5).
+
+    Returns:
+        tuple: Precision and recall values.
+    """
     model.eval()
     tp, fp, fn = 0, 0, 0
     with torch.no_grad():
@@ -154,16 +174,43 @@ def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
     return precision, recall
 
 def coco_to_pascal(box):
+    """
+    Convert a bounding box from COCO format (x1, y1, width, height) to Pascal VOC format (x1, y1, x2, y2).
+
+    Args:
+        box (list or tuple): Bounding box in COCO format.
+
+    Returns:
+        list: Bounding box in Pascal VOC format.
+    """
     x1, y1, w, h = box
     x2 = x1 + w
     y2 = y1 + h
     return [x1, y1, x2, y2]
 
 def assert_pascal_boxes(boxes):
+    """
+    Assert that a list of bounding boxes are in Pascal VOC format (x1, y1, x2, y2).
+
+    Args:
+        boxes (list): List of bounding boxes.
+
+    Raises:
+        ValueError: If any bounding box is not in Pascal VOC format.
+    """
     for box in boxes:
         assert_pascal_box(box)
 
 def assert_pascal_box(box):
+    """
+    Assert that a bounding box is in Pascal VOC format (x1, y1, x2, y2).
+
+    Args:
+        box (list or tuple): Bounding box in Pascal VOC format.
+
+    Raises:
+        ValueError: If the bounding box is not in Pascal VOC format.
+    """
     x1, y1, x2, y2 = box
     if x2 <= x1 or y2 <= y1:
         raise ValueError(f"Invalid box {box}")
