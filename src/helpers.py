@@ -5,7 +5,7 @@ import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-def create_directories(augmented_dir: str, output_dir: str):
+def create_directories(augmented_dir: str):
     """
     Create directories if they do not exist.
 
@@ -16,7 +16,6 @@ def create_directories(augmented_dir: str, output_dir: str):
     :param output_dir: Directory to store output images.
     """
     os.makedirs(augmented_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
 
 def prepare_class_indices(dataframe: pd.DataFrame, class_names: dict) -> dict:
     """
