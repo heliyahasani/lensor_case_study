@@ -1,7 +1,9 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.inference import router as inference_router
+
 from src.api.healthcheck import router as healthcheck_router
+from src.api.inference import router as inference_router
+
 
 def init_app():
     router = APIRouter()

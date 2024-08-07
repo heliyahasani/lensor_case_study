@@ -1,12 +1,18 @@
 import os
+
 import numpy as np
 import pandas as pd
-import torch
-import albumentations as A
-from PIL import Image
-from albumentations.pytorch import ToTensorV2
 import pytest
-from helpers import create_directories, prepare_class_indices, update_labels_tensor, augment_image
+import torch
+from PIL import Image
+
+from helpers import (
+    augment_image,
+    create_directories,
+    prepare_class_indices,
+    update_labels_tensor,
+)
+
 
 @pytest.fixture
 def sample_dataframe():

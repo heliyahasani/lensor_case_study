@@ -1,8 +1,8 @@
-from pydantic_settings import SettingsConfigDict
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
+
 
 class AppSettings(BaseSettings):
     app_env: str

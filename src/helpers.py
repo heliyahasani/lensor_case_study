@@ -1,9 +1,11 @@
 import os
-import pandas as pd
-import numpy as np
-import torch
+
 import albumentations as A
+import numpy as np
+import pandas as pd
+import torch
 from albumentations.pytorch import ToTensorV2
+
 
 def create_directories(augmented_dir: str):
     """
@@ -17,6 +19,7 @@ def create_directories(augmented_dir: str):
     """
     os.makedirs(augmented_dir, exist_ok=True)
 
+
 def prepare_class_indices(dataframe: pd.DataFrame, class_names: dict) -> dict:
     """
     Prepare indices for each class.
@@ -29,9 +32,9 @@ def prepare_class_indices(dataframe: pd.DataFrame, class_names: dict) -> dict:
     :return: A dictionary with class names as keys and lists of indices as values.
     """
     return {
-        class_name: dataframe[dataframe['name'] == class_name].index.tolist()
-        for class_name in class_names.values()
+        class_name: dataframe[dataframe["name"] == class_name].index.tolist() for class_name in class_names.values()
     }
+
 
 def update_labels_tensor(unique_file_names: list, multi_label_labels_dict: dict, num_classes: int) -> torch.Tensor:
     """
@@ -51,6 +54,7 @@ def update_labels_tensor(unique_file_names: list, multi_label_labels_dict: dict,
     ]
     return torch.stack(multi_label_labels_list)
 
+
 def augment_image(img: np.ndarray, bboxes: list, class_labels: list) -> dict:
     """
     Apply augmentation to the image and bounding boxes.
@@ -63,11 +67,12 @@ def augment_image(img: np.ndarray, bboxes: list, class_labels: list) -> dict:
     :param class_labels: A list of class labels corresponding to the bounding boxes.
     :return: A dictionary containing the augmented image and bounding boxes.
     """
-    augmentation = A.Compose([
-        A.HorizontalFlip(),
-        ToTensorV2()
-    ], bbox_params=A.BboxParams(format='coco', label_fields=['class_labels'], clip=True))
+    augmentation = A.Compose(
+        [A.HorizontalFlip(), ToTensorV2()],
+        bbox_params=A.BboxParams(format="coco", label_fields=["class_labels"], clip=True),
+    )
     return augmentation(image=img, bboxes=bboxes, class_labels=class_labels)
+
 
 def calculate_iou(box1, box2):
     """
@@ -87,13 +92,14 @@ def calculate_iou(box1, box2):
     yi1 = max(y1, y1g)
     xi2 = min(x2, x2g)
     yi2 = min(y2, y2g)
-    
+
     inter_area = max(xi2 - xi1, 0) * max(yi2 - yi1, 0)
     box1_area = (x2 - x1) * (y2 - y1)
     box2_area = (x2g - x1g) * (y2g - y1g)
     union_area = box1_area + box2_area - inter_area
 
     return inter_area / union_area
+
 
 def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
     """
@@ -120,11 +126,11 @@ def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
 
             for img in data[0]:
                 imgs.append((torch.tensor(img, dtype=torch.float32)).to(device))
-            
+
             for target in data[1]:
                 boxes = target["boxes"]
                 labels = target["labels"]
-                
+
                 # Convert (x1, y1, width, height) to (x1, y1, x2, y2)
                 converted_boxes = []
                 for box in boxes:
@@ -132,7 +138,7 @@ def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
                     x2 = x1 + w
                     y2 = y1 + h
                     converted_boxes.append([x1, y1, x2, y2])
-                
+
                 converted_boxes = torch.tensor(converted_boxes, dtype=torch.float32).to(device)
                 labels = labels.to(device)
 
@@ -144,7 +150,7 @@ def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
                 targets.append(targ)
 
             outputs = model(imgs)
-            
+
             for target, output in zip(targets, outputs):
                 gt_boxes = target["boxes"]
                 pred_boxes = output["boxes"]
@@ -162,7 +168,7 @@ def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
 
                     if max_iou >= iou_threshold and pred_labels[max_iou_idx] == target["labels"][i]:
                         tp += 1
-                        pred_boxes = torch.cat((pred_boxes[:max_iou_idx], pred_boxes[max_iou_idx+1:]))
+                        pred_boxes = torch.cat((pred_boxes[:max_iou_idx], pred_boxes[max_iou_idx + 1 :]))
                     else:
                         fn += 1
 
@@ -172,6 +178,7 @@ def calculate_metrics(model, data_loader, device, iou_threshold=0.5):
     recall = tp / (tp + fn) if tp + fn > 0 else 0
 
     return precision, recall
+
 
 def coco_to_pascal(box):
     """
@@ -188,6 +195,7 @@ def coco_to_pascal(box):
     y2 = y1 + h
     return [x1, y1, x2, y2]
 
+
 def assert_pascal_boxes(boxes):
     """
     Assert that a list of bounding boxes are in Pascal VOC format (x1, y1, x2, y2).
@@ -200,6 +208,7 @@ def assert_pascal_boxes(boxes):
     """
     for box in boxes:
         assert_pascal_box(box)
+
 
 def assert_pascal_box(box):
     """

@@ -1,18 +1,35 @@
 import os
+from typing import Tuple
+
+import albumentations as A
 import numpy as np
 import pandas as pd
-from PIL import Image
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
-import albumentations as A
-from helpers import assert_pascal_boxes, coco_to_pascal, create_directories,prepare_class_indices,update_labels_tensor,augment_image
-from prefect import task
 from torchvision import transforms as T
-from typing import Tuple
+
+from helpers import (
+    assert_pascal_boxes,
+    augment_image,
+    coco_to_pascal,
+    create_directories,
+    prepare_class_indices,
+    update_labels_tensor,
+)
 
 
 class CustomDataset(Dataset):
-    def __init__(self, dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, oversample: bool = True, augment: bool = True, augmented_dir: str = 'dataset/augumented/images/train'):
+    def __init__(
+        self,
+        dataframe: pd.DataFrame,
+        unique_file_names: list,
+        image_directory: str,
+        max_class_size: int = 100,
+        oversample: bool = True,
+        augment: bool = True,
+        augmented_dir: str = "dataset/augumented/images/train",
+    ):
         """
         Initialize the CustomDataset class.
 
@@ -32,19 +49,22 @@ class CustomDataset(Dataset):
         self.augmented_dir = augmented_dir
         create_directories(self.augmented_dir)
 
-        self.class_names = self.dataframe.set_index('category_id')['name'].to_dict()
+        self.class_names = self.dataframe.set_index("category_id")["name"].to_dict()
         self.class_indices = prepare_class_indices(self.dataframe, self.class_names)
         self.num_classes = len(self.class_names)
 
         self.multi_label_labels_dict = self._create_multi_label_dict()
-        self.multi_label_labels_tensor = update_labels_tensor(self.unique_file_names, self.multi_label_labels_dict, self.num_classes)
+        self.multi_label_labels_tensor = update_labels_tensor(
+            self.unique_file_names, self.multi_label_labels_dict, self.num_classes
+        )
 
         if augment:
             self.augment_minority_classes()
 
-        self.transform = A.Compose([
-            A.Normalize(normalization='standard')
-        ], bbox_params=A.BboxParams(format='coco', label_fields=['class_labels'], clip=True))
+        self.transform = A.Compose(
+            [A.Normalize(normalization="standard")],
+            bbox_params=A.BboxParams(format="coco", label_fields=["class_labels"], clip=True),
+        )
 
     def _create_multi_label_dict(self) -> dict:
         """
@@ -54,8 +74,8 @@ class CustomDataset(Dataset):
         """
         multi_label_labels_dict = {}
         for idx in self.dataframe.index:
-            filename = self.dataframe.loc[idx, 'file_name']
-            labels = set(self.dataframe[self.dataframe['file_name'] == filename]['name'].tolist())
+            filename = self.dataframe.loc[idx, "file_name"]
+            labels = set(self.dataframe[self.dataframe["file_name"] == filename]["name"].tolist())
             multi_label_labels = [0] * self.num_classes
             for label in labels:
                 class_id = list(self.class_names.values()).index(label)
@@ -75,15 +95,18 @@ class CustomDataset(Dataset):
                 for idx in indices:
                     if num_to_augment <= 0:
                         break
-                    file_name = self.dataframe.loc[idx, 'file_name']
+                    file_name = self.dataframe.loc[idx, "file_name"]
                     img_path = os.path.join(self.image_directory, file_name)
-                    img = np.array(Image.open(img_path).convert('RGB'))
-                    class_labels = [self.class_names[x] for x in self.dataframe[self.dataframe['file_name'] == file_name]['category_id']]
-                    bboxes = [tuple(x) for x in self.dataframe[self.dataframe['file_name'] == file_name]['bbox']]
+                    img = np.array(Image.open(img_path).convert("RGB"))
+                    class_labels = [
+                        self.class_names[x]
+                        for x in self.dataframe[self.dataframe["file_name"] == file_name]["category_id"]
+                    ]
+                    bboxes = [tuple(x) for x in self.dataframe[self.dataframe["file_name"] == file_name]["bbox"]]
                     for i in range(num_to_augment):
                         augmented = augment_image(img, bboxes, class_labels)
-                        augmented_img = augmented['image']
-                        augmented_boxes = np.array(augmented['bboxes'])
+                        augmented_img = augmented["image"]
+                        augmented_boxes = np.array(augmented["bboxes"])
 
                         if len(augmented_boxes) == 0:
                             continue
@@ -96,21 +119,23 @@ class CustomDataset(Dataset):
                         self.multi_label_labels_dict[augmented_file_name] = self.multi_label_labels_dict[file_name]
 
                         for box in augmented_boxes:
-                            new_row = self.dataframe[self.dataframe['file_name'] == file_name].iloc[0].copy()
+                            new_row = self.dataframe[self.dataframe["file_name"] == file_name].iloc[0].copy()
                             new_row["x1"], new_row["y1"], new_row["w"], new_row["h"] = box
                             new_row["bbox"] = [box[0], box[1], box[2], box[3]]
                             new_row["file_name"] = augmented_file_name
                             self.dataframe = pd.concat([self.dataframe, pd.DataFrame([new_row])], ignore_index=True)
-                        
+
                         num_to_augment -= 1
                         augmented_count += 1
 
         self.dataframe.reset_index(drop=True, inplace=True)
-        self.unique_file_names = self.dataframe['file_name'].unique().tolist()
+        self.unique_file_names = self.dataframe["file_name"].unique().tolist()
 
-        self.dataframe.to_csv('augmented_data.csv', index=False)
+        self.dataframe.to_csv("augmented_data.csv", index=False)
 
-        self.multi_label_labels_tensor = update_labels_tensor(self.unique_file_names, self.multi_label_labels_dict, self.num_classes)
+        self.multi_label_labels_tensor = update_labels_tensor(
+            self.unique_file_names, self.multi_label_labels_dict, self.num_classes
+        )
 
     def __len__(self) -> int:
         """
@@ -128,21 +153,28 @@ class CustomDataset(Dataset):
         :return: A tuple containing the transformed image and target dictionary with bounding boxes and labels.
         """
         file_name = self.unique_file_names[idx]
-        img_path = os.path.join(self.image_directory, file_name) if os.path.exists(os.path.join(self.image_directory, file_name)) else os.path.join(self.augmented_dir, file_name)
+        img_path = (
+            os.path.join(self.image_directory, file_name)
+            if os.path.exists(os.path.join(self.image_directory, file_name))
+            else os.path.join(self.augmented_dir, file_name)
+        )
         label = self.get_labels(idx)
-        bboxes = [x for x in self.dataframe[self.dataframe['file_name'] == file_name]['bbox']]
+        bboxes = [x for x in self.dataframe[self.dataframe["file_name"] == file_name]["bbox"]]
 
-        img = np.array(Image.open(img_path).convert('RGB'))
-        transformed = self.transform(image=img, bboxes=bboxes, class_labels=[self.class_names[x] for x in self.dataframe[self.dataframe['file_name'] == file_name]['category_id']])
-        transformed_img = transformed['image']
+        img = np.array(Image.open(img_path).convert("RGB"))
+        transformed = self.transform(
+            image=img,
+            bboxes=bboxes,
+            class_labels=[
+                self.class_names[x] for x in self.dataframe[self.dataframe["file_name"] == file_name]["category_id"]
+            ],
+        )
+        transformed_img = transformed["image"]
         transformed_img = torch.tensor(transformed_img, dtype=torch.float32).permute(2, 0, 1)
-        pascal_boxes = [list(coco_to_pascal(box)) for box in transformed['bboxes']]
+        pascal_boxes = [list(coco_to_pascal(box)) for box in transformed["bboxes"]]
         assert_pascal_boxes(pascal_boxes)
-        
-        target = {
-            "boxes": torch.tensor(np.array(pascal_boxes), dtype=torch.float32),
-            "labels": label
-        }
+
+        target = {"boxes": torch.tensor(np.array(pascal_boxes), dtype=torch.float32), "labels": label}
 
         return transformed_img, target
 
@@ -156,16 +188,21 @@ class CustomDataset(Dataset):
         return self.multi_label_labels_tensor[idx]
 
 
-
-def create_dataset_(dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, augment: bool = True) -> CustomDataset:
+def create_dataset_(
+    dataframe: pd.DataFrame,
+    unique_file_names: list,
+    image_directory: str,
+    max_class_size: int = 100,
+    augment: bool = True,
+) -> CustomDataset:
     """
     Prefect task to create a CustomDataset instance.
 
-    This function creates an instance of the CustomDataset class, which is used to handle 
-    and preprocess image data for machine learning tasks. The dataset includes functionality 
+    This function creates an instance of the CustomDataset class, which is used to handle
+    and preprocess image data for machine learning tasks. The dataset includes functionality
     for data augmentation to balance class distributions.
 
-    :param dataframe: A Pandas DataFrame containing the dataset information. 
+    :param dataframe: A Pandas DataFrame containing the dataset information.
                       It should include columns such as 'file_name', 'category_id', 'bbox', etc.
     :param unique_file_names: A list of unique file names present in the dataset.
     :param image_directory: The directory where the original images are stored.

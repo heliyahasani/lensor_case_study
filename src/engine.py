@@ -4,9 +4,11 @@ import time
 
 import torch
 import torchvision.models.detection.mask_rcnn
+
 import utils
 from coco_eval import CocoEvaluator
 from coco_utils import get_coco_api_from_dataset
+
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, scaler=None):
     """
@@ -77,6 +79,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, sc
 
     return metric_logger
 
+
 def _get_iou_types(model):
     """
     Get the types of Intersection over Union (IoU) to be evaluated for the model.
@@ -96,6 +99,7 @@ def _get_iou_types(model):
     if isinstance(model_without_ddp, torchvision.models.detection.KeypointRCNN):
         iou_types.append("keypoints")
     return iou_types
+
 
 @torch.inference_mode()
 def evaluate(model, data_loader, device):

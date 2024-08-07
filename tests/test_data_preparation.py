@@ -1,9 +1,14 @@
-import os
-import pytest
 import json
 import logging
+import os
+
+import pytest
 from prefect import Flow
-from prepare import DataPreparation, prepare_data_task  # Replace with the actual module name
+
+from prepare import (  # Replace with the actual module name
+    DataPreparation,
+    prepare_data_task,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
