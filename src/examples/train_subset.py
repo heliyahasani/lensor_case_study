@@ -24,7 +24,7 @@ test_annotations_json_path = "/Users/heliyahasani/Desktop/lensor_case_study/data
 
 def main():
     # Initialize TensorBoard writer
-    writer = SummaryWriter(log_dir="runs/fasterrcnn_experiment")
+    writer = SummaryWriter()
 
     data_prep = DataPreparation(train_annotations_json_path, val_annotations_json_path, test_annotations_json_path)
     train_merged_df, validation_merged_df, test_merged_df, balanced_df = data_prep.prepare_data()
@@ -66,7 +66,9 @@ def main():
     num_epochs = 1
     for epoch in range(num_epochs):
         train_loss = train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10, scaler=None)
-        writer.add_scalar("Loss/train", train_loss.meters["loss"].global_avg, epoch)
+        writer.add_scalar('Loss/train', train_loss.meters['loss'].global_avg, epoch)
+        print("Flushing..")
+        writer.flush()
         lr_scheduler.step()
         coco_evaluator = evaluate(model, data_loader_val, device)  # Evaluate on validation set
         for i, stat in enumerate(coco_evaluator.coco_eval["bbox"].stats):
@@ -78,6 +80,7 @@ def main():
 
     torch.save(model.state_dict(), "fasterrcnn_model.pth")
 
+    writer.flush()
     writer.close()
 
 

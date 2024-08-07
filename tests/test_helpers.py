@@ -13,11 +13,13 @@ from helpers import (
     update_labels_tensor,
 )
 
+img1  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.2e0aff71cdeb0fc5615a484010eb3c56.jpg"
+img2  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.6cfdecf9f081672f8a9f1c91c75d1ab9.jpg"
 
 @pytest.fixture
 def sample_dataframe():
     data = {
-        'file_name': ['image1.jpg', 'image2.jpg'],
+        'file_name': [img1,img2],
         'category_id': [1, 2],
         'name': ['cat', 'dog'],
         'bbox': [[10, 20, 30, 40], [50, 60, 70, 80]]
@@ -37,12 +39,8 @@ def sample_image():
 
 def test_create_directories(tmpdir):
     augmented_dir = os.path.join(tmpdir, 'augmented')
-    output_dir = os.path.join(tmpdir, 'output')
-
-    create_directories(augmented_dir, output_dir)
-
+    create_directories(augmented_dir)
     assert os.path.exists(augmented_dir)
-    assert os.path.exists(output_dir)
 
 def test_prepare_class_indices(sample_dataframe):
     class_names = {1: 'cat', 2: 'dog'}

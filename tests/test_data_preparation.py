@@ -5,9 +5,8 @@ import os
 import pytest
 from prefect import Flow
 
-from prepare import (  # Replace with the actual module name
+from prepare import (  
     DataPreparation,
-    prepare_data_task,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -20,10 +19,13 @@ test_dir = 'testing'
 if not os.path.exists(test_dir):
     os.makedirs(test_dir)
 
+img1  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.2e0aff71cdeb0fc5615a484010eb3c56.jpg"
+img2  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.6cfdecf9f081672f8a9f1c91c75d1ab9.jpg"
+
 # Sample JSON data for testing
 sample_data = {
     "categories": [{"id": 1, "name": "cat"}, {"id": 2, "name": "dog"}],
-    "images": [{"id": 1, "file_name": "image1.jpg"}, {"id": 2, "file_name": "image2.jpg"}],
+    "images": [{"id": 1, "file_name": img1}, {"id": 2, "file_name": img2}],
     "annotations": [
         {"id": 1, "image_id": 1, "category_id": 1, "bbox": [10, 20, 30, 40]},
         {"id": 2, "image_id": 2, "category_id": 2, "bbox": [50, 60, 70, 80]}
@@ -83,14 +85,3 @@ def test_get_balanced_samples(data_preparation):
     balanced_df = data_preparation.get_balanced_samples(merged_df_with_bbox, max_samples_per_category=1)
     
     assert len(balanced_df) == 2  # Since there are 2 categories and max_samples_per_category is 1
-
-def test_prepare_data_task():
-    with Flow("test_flow") as flow:
-        train_df, val_df, test_df, balanced_df = prepare_data_task(train_json, val_json, test_json)
-    
-    state = flow.run()
-    assert state.is_successful()
-    task_state = state.result[prepare_data_task]
-    
-    assert isinstance(task_state.result, tuple)
-    assert len(task_state.result) == 4

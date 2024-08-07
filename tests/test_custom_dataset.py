@@ -8,10 +8,10 @@ from PIL import Image
 
 from custom_dataset import CustomDataset
 
-img1  = "/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.2e0aff71cdeb0fc5615a484010eb3c56.jpg"
-img2  = "/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.6cfdecf9f081672f8a9f1c91c75d1ab9.jpg"
-img3  = "/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.fcf788371d618e45d85f008c64238770.jpg"
-img4  = "/train/1_jpg.rf.5a99d7429da2a3ab9bd88105a31d9c4a.jpg"
+img1  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.2e0aff71cdeb0fc5615a484010eb3c56.jpg"
+img2  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.6cfdecf9f081672f8a9f1c91c75d1ab9.jpg"
+img3  = "dataset/train/_1OL6RBGTRaIlXPqpsNXCA_jpeg.rf.fcf788371d618e45d85f008c64238770.jpg"
+img4  = "dataset/train/1_jpg.rf.5a99d7429da2a3ab9bd88105a31d9c4a.jpg"
 
 class TestCustomDataset(unittest.TestCase):
 
