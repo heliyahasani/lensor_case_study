@@ -1,6 +1,6 @@
 import torch
 import torchvision
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import utils
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torch.utils.tensorboard import SummaryWriter
@@ -34,7 +34,10 @@ def main():
     # Device setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    data_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4, collate_fn=utils.collate_fn)
+    # Slice the dataset to get only the first 20 elements
+    train_subset = Subset(train_dataset, range(20))
+
+    data_loader = DataLoader(train_subset, batch_size=4, shuffle=True, num_workers=4, collate_fn=utils.collate_fn)
     data_loader_val = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=4, collate_fn=utils.collate_fn)
     data_loader_test = DataLoader(test_dataset, batch_size=4, shuffle=False, num_workers=4, collate_fn=utils.collate_fn)
 
@@ -72,4 +75,4 @@ def main():
     writer.close()
 
 if __name__ == '__main__':
-    main()
+    main() 
