@@ -9,6 +9,21 @@ from coco_eval import CocoEvaluator
 from coco_utils import get_coco_api_from_dataset
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, scaler=None):
+    """
+    Train the model for one epoch.
+
+    Args:
+        model (torch.nn.Module): The model to train.
+        optimizer (torch.optim.Optimizer): The optimizer used for training.
+        data_loader (torch.utils.data.DataLoader): DataLoader for the training data.
+        device (torch.device): Device to run the training on (CPU or GPU).
+        epoch (int): Current epoch number.
+        print_freq (int): Frequency of printing training progress.
+        scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision training.
+
+    Returns:
+        utils.MetricLogger: Logger with training metrics.
+    """
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value:.6f}"))
@@ -63,6 +78,15 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, sc
     return metric_logger
 
 def _get_iou_types(model):
+    """
+    Get the types of Intersection over Union (IoU) to be evaluated for the model.
+
+    Args:
+        model (torch.nn.Module): The model to evaluate.
+
+    Returns:
+        list: List of IoU types.
+    """
     model_without_ddp = model
     if isinstance(model, torch.nn.parallel.DistributedDataParallel):
         model_without_ddp = model.module
@@ -75,6 +99,17 @@ def _get_iou_types(model):
 
 @torch.inference_mode()
 def evaluate(model, data_loader, device):
+    """
+    Evaluate the model on the given dataset.
+
+    Args:
+        model (torch.nn.Module): The model to evaluate.
+        data_loader (torch.utils.data.DataLoader): DataLoader for the evaluation data.
+        device (torch.device): Device to run the evaluation on (CPU or GPU).
+
+    Returns:
+        CocoEvaluator: COCO evaluator with evaluation metrics.
+    """
     n_threads = torch.get_num_threads()
     # FIXME remove this and make paste_masks_in_image run on the GPU
     torch.set_num_threads(1)

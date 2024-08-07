@@ -103,16 +103,3 @@ class DataPreparation:
 
         return train_merged_df, validation_merged_df, test_merged_df, balanced_df
 
-# Define tasks using Prefect
-@task
-def prepare_data_task(train_json: str, val_json: str, test_json: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Prefect task to prepare the data.
-
-    :param train_json: Path to the training data JSON file.
-    :param val_json: Path to the validation data JSON file.
-    :param test_json: Path to the test data JSON file.
-    :return: A tuple containing DataFrames for training, validation, test, and balanced training data.
-    """
-    data_preparation = DataPreparation(train_json, val_json, test_json)
-    return data_preparation.prepare_data()

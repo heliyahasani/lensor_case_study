@@ -174,21 +174,3 @@ def create_dataset_(dataframe: pd.DataFrame, unique_file_names: list, image_dire
     :return: An instance of the CustomDataset class.
     """
     return CustomDataset(dataframe, unique_file_names, image_directory, max_class_size, augment=augment)
-@task
-def create_dataset(dataframe: pd.DataFrame, unique_file_names: list, image_directory: str, max_class_size: int = 100, augment: bool = True) -> CustomDataset:
-    """
-    Prefect task to create a CustomDataset instance.
-
-    This function creates an instance of the CustomDataset class, which is used to handle 
-    and preprocess image data for machine learning tasks. The dataset includes functionality 
-    for data augmentation to balance class distributions.
-
-    :param dataframe: A Pandas DataFrame containing the dataset information. 
-                      It should include columns such as 'file_name', 'category_id', 'bbox', etc.
-    :param unique_file_names: A list of unique file names present in the dataset.
-    :param image_directory: The directory where the original images are stored.
-    :param max_class_size: The maximum number of samples per class. Defaults to 100.
-    :param augment: Boolean flag to determine whether to augment the dataset to balance classes. Defaults to True.
-    :return: An instance of the CustomDataset class.
-    """
-    return CustomDataset(dataframe, unique_file_names, image_directory, max_class_size, augment=augment)
