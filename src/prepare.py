@@ -6,7 +6,7 @@ import pandas as pd
 
 
 class DataPreparation:
-    def __init__(self, train_json: str, val_json: str, test_json: str):
+    def __init__(self):
         """
         Initialize the DataPreparation class with JSON file paths.
 
@@ -14,9 +14,9 @@ class DataPreparation:
         :param val_json: Path to the validation data JSON file.
         :param test_json: Path to the test data JSON file.
         """
-        self.train_json = train_json
-        self.val_json = val_json
-        self.test_json = test_json
+        self.train_json = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/annotations/instances_train.json"
+        self.val_json = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/annotations/instances_val.json"
+        self.test_json = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/annotations/instances_test.json"
         self.logger = logging.getLogger(__name__)
 
     def load_json_to_dataframe(self, file_path: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
