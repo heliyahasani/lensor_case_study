@@ -28,7 +28,7 @@ class CustomDataset(Dataset):
         max_class_size: int = 100,
         oversample: bool = True,
         augment: bool = True,
-        augmented_dir: str = "dataset/augumented/images/train",
+        augmented_dir: str = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/augmented/images/train",
     ):
         """
         Initialize the CustomDataset class.
@@ -150,7 +150,7 @@ class CustomDataset(Dataset):
         Get a sample from the dataset.
 
         :param idx: Index of the sample.
-        :return: A tuple containing the transformed image and target dictionary with bounding boxes and labels.
+        :return: A tuple containing the transformed image and target dictionary with bounding boxes, labels, image_id, area, and iscrowd.
         """
         file_name = self.unique_file_names[idx]
         img_path = (
@@ -158,23 +158,41 @@ class CustomDataset(Dataset):
             if os.path.exists(os.path.join(self.image_directory, file_name))
             else os.path.join(self.augmented_dir, file_name)
         )
-        label = self.get_labels(idx)
-        bboxes = [x for x in self.dataframe[self.dataframe["file_name"] == file_name]["bbox"]]
+        # Extract relevant rows for the current image
+        df_subset = self.dataframe[self.dataframe["file_name"] == file_name]
+
+        # Extract bboxes, labels, area, and iscrowd
+        bboxes = df_subset["bbox"].tolist()
+        labels = df_subset["category_id"].tolist()  # Use category_id directly, assuming it is already integer
+        areas = df_subset["area"].tolist()
+        iscrowd = df_subset["iscrowd"].tolist()
+
+        # Ensure consistency in the number of bounding boxes and labels
+        assert (
+            len(bboxes) == len(labels) == len(areas) == len(iscrowd)
+        ), "Mismatch in the number of bboxes, labels, areas, and iscrowd values"
 
         img = np.array(Image.open(img_path).convert("RGB"))
         transformed = self.transform(
             image=img,
             bboxes=bboxes,
-            class_labels=[
-                self.class_names[x] for x in self.dataframe[self.dataframe["file_name"] == file_name]["category_id"]
-            ],
+            class_labels=labels,
         )
         transformed_img = transformed["image"]
         transformed_img = torch.tensor(transformed_img, dtype=torch.float32).permute(2, 0, 1)
         pascal_boxes = [list(coco_to_pascal(box)) for box in transformed["bboxes"]]
         assert_pascal_boxes(pascal_boxes)
 
-        target = {"boxes": torch.tensor(np.array(pascal_boxes), dtype=torch.float32), "labels": label}
+        # Extract image_id from the dataframe
+        image_id = df_subset["image_id"].iloc[0]
+
+        target = {
+            "boxes": torch.tensor(np.array(pascal_boxes), dtype=torch.float32),
+            "labels": torch.tensor(labels, dtype=torch.int64),  # Labels should be integer indices
+            "image_id": torch.tensor(image_id, dtype=torch.int64),
+            "area": torch.tensor(areas, dtype=torch.float32),
+            "iscrowd": torch.tensor(iscrowd, dtype=torch.int64),
+        }
 
         return transformed_img, target
 
