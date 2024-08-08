@@ -14,9 +14,6 @@ It is a deep neural network for object detection and finding damages on a vehicl
   - `api/`: Code related to API endpoints.
   - `configs/`: Configuration files for the project.
   - `data_exploration/`: Notebooks and results related to data exploration.
-  - `further_steps/`: Additional steps for data exploration.
-  - `notebooks/`: Jupyter notebooks for data analysis and visualization.
-  - `results/`: Results and annotations from data exploration.
   - `examples/`: Example scripts and code snippets.
 
 - `tests/`: Contains test scripts for the project.
