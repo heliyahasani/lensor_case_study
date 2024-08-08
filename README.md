@@ -74,6 +74,7 @@ make install
 ```sh
 cd lensor_damage_detection
 make docker-build
+make docker-run
 ```
 
 ## Challenges
