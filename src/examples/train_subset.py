@@ -13,20 +13,16 @@ from prepare import DataPreparation
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-train_image_directory = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/images/train"
-val_image_directory = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/images/val"
-test_image_directory = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/images/test"
-
-train_annotations_json_path = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/annotations/instances_train.json"
-val_annotations_json_path = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/annotations/instances_val.json"
-test_annotations_json_path = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/annotations/instances_test.json"
+train_image_directory = "dataset/images/train"
+val_image_directory = "dataset/images/val"
+test_image_directory = "dataset/images/test"
 
 
 def main():
     # Initialize TensorBoard writer
     writer = SummaryWriter()
 
-    data_prep = DataPreparation(train_annotations_json_path, val_annotations_json_path, test_annotations_json_path)
+    data_prep = DataPreparation()
     train_merged_df, validation_merged_df, test_merged_df, balanced_df = data_prep.prepare_data()
 
     train_dataset = create_dataset_(train_merged_df, train_merged_df["file_name"].unique(), train_image_directory)
@@ -41,7 +37,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Slice the dataset to get only the first 20 elements
-    train_subset = Subset(train_dataset, range(20))
+    train_subset = Subset(train_dataset, range(100))
 
     data_loader = DataLoader(train_subset, batch_size=4, shuffle=True, num_workers=4, collate_fn=utils.collate_fn)
     data_loader_val = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=4, collate_fn=utils.collate_fn)
@@ -63,10 +59,10 @@ def main():
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
     # Training loop
-    num_epochs = 1
+    num_epochs = 100
     for epoch in range(num_epochs):
         train_loss = train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10, scaler=None)
-        writer.add_scalar('Loss/train', train_loss.meters['loss'].global_avg, epoch)
+        writer.add_scalar("Loss/train", train_loss.meters["loss"].global_avg, epoch)
         print("Flushing..")
         writer.flush()
         lr_scheduler.step()

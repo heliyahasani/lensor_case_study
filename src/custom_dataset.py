@@ -28,7 +28,7 @@ class CustomDataset(Dataset):
         max_class_size: int = 100,
         oversample: bool = True,
         augment: bool = True,
-        augmented_dir: str = "/Users/heliyahasani/Desktop/lensor_case_study/dataset/augmented/images/train",
+        augmented_dir: str = "dataset/augmented/images/train",
     ):
         """
         Initialize the CustomDataset class.
