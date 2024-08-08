@@ -1,7 +1,8 @@
-from fastapi import APIRouter
 import os
+
 import aiofiles
-from fastapi import UploadFile, File,Request
+from fastapi import APIRouter, File, Request, UploadFile
+
 
 class BaseService:
     def __init__(self):
